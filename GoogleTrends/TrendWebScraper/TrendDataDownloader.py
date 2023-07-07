@@ -54,8 +54,9 @@ def dlTrendCSV(GTrendPage, thisPath, trendTerm):
     with GTrendPage.expect_download() as download_info:
         GTrendPage.locator("widget").filter(has_text="Interest over time help_outline Help file_download code share ‪1 Jan 2004‬‪1 Oct").get_by_role("button", name="file_download").click()
     download = download_info.value
-    download.save_as(f'{thisPath}/{trendTerm}.csv')
-    return None
+    downloadPath = f'{thisPath}/{trendTerm}.csv'
+    download.save_as(downloadPath)
+    return downloadPath
 
 def searchNewTrend(GTrendPage, newTerm):
     # click the search term box, type in the term 'help', press Enter then download the csv again
