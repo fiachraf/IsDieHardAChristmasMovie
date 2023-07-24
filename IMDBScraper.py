@@ -31,12 +31,14 @@ def main() -> None:
         #             pass
         # print(linkList)
         # linkList = imdbTop250(page)
-        try:
-            linkList = imdbTop250New(page)
-        except Exception as e:
-            linkList = imdbTop250(page)
-        print(linkList)
+        # try:
+        #     linkList = imdbTop250New(page)
+        # except Exception as e:
+        #     linkList = imdbTop250(page)
+        # print(linkList)
 
+        print(imdbGenre250(page,'https://www.imdb.com/search/title/?title_type=feature&genres=animation&start=1&explore=genres&ref_=adv_nxt'))
+        # print(imdbGenre250(page,'https://www.imdb.com/search/title/?title_type=feature&genres=animation&start=1&explore=genres&ref_=adv_nxt'))
         #get the title of the movie from the webpage
         mvTitle = movieTitle(page, 'https://www.imdb.com/title/tt0111161/')
 
@@ -98,6 +100,33 @@ def imdbTop250New(Top250Page: Playwright) -> list:
         websiteList.append(link)
     return websiteList
 
+def imdbGenre250(G250Page, url):
+    #get the first 250 movies listed for the genre
+    # go to the genre page
+    G250Page.goto(url)
+    websiteList = []
+    extraPages = ['50.', '100.', '150.', '200.', '250.', '300.']
+    for limit in extraPages:
+        lastEntry=G250Page.get_by_role("heading").filter(has_text=limit)
+        #this waits for the specified element to be loaded on the page. This will ensure that the table is loaded. If it doesn't load it will timeout and crash
+        lastEntry.wait_for()
+        #get the html from the imdb page and then use beautiful soup to parse it and find the desired info
+        html = G250Page.content()
+        soup = BeautifulSoup(html, 'html.parser')
+        row_entries = soup.find_all(class_='lister-item-header')
+        for k in row_entries:
+            ape = k.find('a')
+            #ape has type <class 'bs4.element.Tag'>
+            partial_link = ape.get('href')
+            link = 'https://www.imdb.com' + partial_link[:17]
+            if link.find('title') == -1:
+                continue
+            websiteList.append(link)
+        #click through to the next page
+        G250Page.get_by_role("link", name="Next »").nth(1).wait_for()
+        G250Page.get_by_role("link", name="Next »").nth(1).click()
+    return websiteList
+
 def movieTitle(mvPage, url) -> str:
     #get the title of the movie from the webpage
     mvPage.goto(url)
@@ -105,7 +134,8 @@ def movieTitle(mvPage, url) -> str:
     html = mvPage.content()
     soup = BeautifulSoup(html, 'html.parser')
     mvTitle = soup.find('title').get_text()
-    titleEndIndex = (re.search(r"\s*\(....\)", mvTitle)).span()[0]
+    print(f'mvTitle: {mvTitle}')
+    titleEndIndex = (re.search(r"\s*\(.*\)", mvTitle)).span()[0]
     return mvTitle[:titleEndIndex]
 
 

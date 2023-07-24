@@ -22,7 +22,9 @@ def main() -> None:
 
         # print(mvGenre)
         page.goto('https://www.rottentomatoes.com/m/joy_ride_202')
-        rottenSearch(page, 'elf')
+        test = rottenLink(page, 'joy ride 23')
+        print(test)
+        # rottenSearch(page, 'elf')
         browser.close()
 
 
@@ -46,10 +48,24 @@ def movieChris(mvPage, url, goto=True):
             continue
     return False
 
-def rottenLink(mvName: str) -> str:
+def rottenLink(mvPage, mvName: str) -> str:
     mvName = mvName.lower()
-    mvName = mvName.replace(' ', '_')
-    link = 'https://www.rottentomatoes.com/m/' + mvName
+    mv_Name_1 = mvName.replace(' ', '_')
+    mv_Name = mv_Name_1.replace('-', '_')
+    link = 'https://www.rottentomatoes.com/m/' + mv_Name
+
+    try:
+        mvPage.goto(link)
+        testLink = mvPage.get_by_role("heading", name="404 - Not Found")
+        # testLink.wait_for()
+        if testLink.is_visible() == True:
+            #if it gets a 404 then it will try search for the movie
+            # link = rottenSearch(mvPage, mvName)
+            #if the link returns a 404 then return an empty string
+            return ''
+    except Exception as e:
+        pass
+
     return link
 
 def rottenSearch(mvPage, mvName):
