@@ -24,6 +24,8 @@ def main() -> None:
         page.goto('https://www.rottentomatoes.com/m/joy_ride_202')
         test = rottenLink(page, 'joy ride 23')
         print(test)
+        test = rottenSearch(page, 'Spider-Man: No Way Hom')
+        print(f'2 {test}')
         # rottenSearch(page, 'elf')
         browser.close()
 
@@ -60,7 +62,7 @@ def rottenLink(mvPage, mvName: str) -> str:
         # testLink.wait_for()
         if testLink.is_visible() == True:
             #if it gets a 404 then it will try search for the movie
-            # link = rottenSearch(mvPage, mvName)
+            link = rottenSearch(mvPage, mvName)
             #if the link returns a 404 then return an empty string
             return ''
     except Exception as e:
@@ -79,7 +81,19 @@ def rottenSearch(mvPage, mvName):
     #using the false can cause a cookie banner to appear and cause interference and it may give the weong result
     # print(movieChris(mvPage, mvPage.url, False))
     # print(movieChris(mvPage, mvPage.url))
-    return mvPage.url
+    #wait for the page to load fully
+    mvPage.locator("#scoreboard").get_by_text("Tomatometer").wait_for()
+    html = mvPage.content()
+    soup = BeautifulSoup(html, 'html.parser')
+    #find the title as listed on the page
+    grape = soup.find_all('h1', class_='title')
+    for k in grape:
+        ape = k.get_text()
+        #if the name supplied to search for matches exactly with the rotten tomatoes title
+        if mvName == ape:
+            return mvPage.url
+        else:
+            return ''
 
 if __name__ == '__main__':
     main()
