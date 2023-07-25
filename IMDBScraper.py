@@ -42,7 +42,7 @@ def main() -> None:
         #get the title of the movie from the webpage
         mvTitle = movieTitle(page, 'https://www.imdb.com/title/tt0111161/')
 
-        print(mvTitle)
+        # print(mvTitle)
 
         browser.close()
 
@@ -134,7 +134,7 @@ def movieTitle(mvPage, url) -> str:
     html = mvPage.content()
     soup = BeautifulSoup(html, 'html.parser')
     mvTitle = soup.find('title').get_text()
-    print(f'mvTitle: {mvTitle}')
+    # print(f'mvTitle: {mvTitle}')
     titleEndIndex = (re.search(r"\s*\(.*\)", mvTitle)).span()[0]
     return mvTitle[:titleEndIndex]
 
