@@ -84,7 +84,7 @@ with sync_playwright() as playwright:
                 # page2.wait_for_timeout(1500)
                 #get the last entry in the table so new entries can be inserted after it
                 res = cur.execute('SELECT Mindex FROM movie ORDER BY Mindex DESC')
-                lIndex = res.fetchone()
+                lIndex = res.fetchone()[0]
 
                 # data = [lIndex + 1, mvTitle, imdbLink, christmas, rLink, trend_path]
                 data = [lIndex + 1, mvTitle, imdbLink, christmas, rLink]
@@ -137,7 +137,7 @@ with sync_playwright() as playwright:
                     # page2.wait_for_timeout(1500)
 
                     res = cur.execute('SELECT Mindex FROM movie ORDER BY Mindex DESC')
-                    lIndex = res.fetchone()
+                    lIndex = res.fetchone()[0]
 
                     # data = [lIndex + 1, mvTitle, imdbLink, christmas, rLink, trend_path]
                     data = [lIndex + 1, mvTitle, imdbLink, christmas, rLink]
