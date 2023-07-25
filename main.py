@@ -57,68 +57,46 @@ with sync_playwright() as playwright:
     cindex = 0
     #for each link from the imdb top 250 page
     for index, imdbLink in enumerate(imdb_list):
-        mvTitle = imdb.movieTitle(page1, imdbLink)
-        page1.wait_for_timeout(1500)
-        #see if the movie can be found on rotten tomatoes
-        rLink = rotten.rottenLink(page3, mvTitle)
-        if rLink == '':
-            continue
-        christmas = rotten.movieChris(page3, rLink, goto=False)
-        page3.wait_for_timeout(1500)
-        #search for the google trends data
-        gtrend.searchNewTrend(page2, mvTitle)
-        page2.wait_for_timeout(1500)
-        trend_path = gtrend.dlTrendCSV(page2, '/home/fiachra/atom_projects/IsDieHardAChristmasMovie/GoogleTrends/Data', mvTitle)
-        page2.wait_for_timeout(1500)
+        try:
+            res = cur.execute('SELECT title FROM movie WHERE imdb_link=(?)', (imdbLink,))
+            # print(f'res:{res}')
+            # print(f'res.fetchone():{res.fetchone()}')
+            # print(f'len(res.fetchall()):{len(res.fetchall())}')
+            # print(f'res.fetchall():{res.fetchall()}')
+            # test = res.fetchall()
+            # print(f'len(test): {len(test)}')
+            # print(f'test: {test}')
+            # print(f'type(res.fetchall()):{type(res.fetchall())}')
+            if len(res.fetchall()) == 0:
+                mvTitle = imdb.movieTitle(page1, imdbLink)
+                page1.wait_for_timeout(1500)
+                #see if the movie can be found on rotten tomatoes
+                rLink = rotten.rottenLink(page3, mvTitle)
+                if rLink == '':
+                    print('test')
+                    continue
+                christmas = rotten.movieChris(page3, rLink, goto=False)
+                page3.wait_for_timeout(1500)
+                #search for the google trends data
+                # gtrend.searchNewTrend(page2, mvTitle)
+                # page2.wait_for_timeout(1500)
+                # trend_path = gtrend.dlTrendCSV(page2, '/home/fiachra/atom_projects/IsDieHardAChristmasMovie/GoogleTrends/Data', mvTitle)
+                # page2.wait_for_timeout(1500)
+                #get the last entry in the table so new entries can be inserted after it
+                res = cur.execute('SELECT Mindex FROM movie ORDER BY Mindex DESC')
+                lIndex = res.fetchone()
 
+                # data = [lIndex + 1, mvTitle, imdbLink, christmas, rLink, trend_path]
+                data = [lIndex + 1, mvTitle, imdbLink, christmas, rLink]
+                # cur.execute('INSERT INTO movie VALUES(?, ?, ?, ?, ?, ?)', data)
+                cur.execute('INSERT INTO movie (Mindex, title, imdb_link, bool_christmas, rotten_link) VALUES(?, ?, ?, ?, ?)', data)
+                con.commit()
 
-        data = [cindex, mvTitle, imdbLink, christmas, rLink, trend_path]
-        cur.execute('INSERT INTO movie VALUES(?, ?, ?, ?, ?, ?)', data)
-        con.commit()
-        cindex += 1
-        print(f'cindex: {cindex}')
+        except Exception as E:
+            print(E)
+            print(data)
         #break for initial testing
         # break
-
-    #get even more movies based on the imdb links
-    # for index, imdbLink in enumerate(imdb_list):
-    #     for i in range(0, 10):
-    #         print(f'i: {i}')
-    #         linkEnd = int(imdbLink[-2])
-    #         print(f'linkEnd: {linkEnd}')
-    #         if i == linkEnd:
-    #             continue
-    #         newLink = imdbLink[:-2] + str(i) + '/'
-    #         # dbSearch = newLink
-    #         print('newLink:', newLink)
-    #         # print('linkEnd:', linkEnd)
-    #         print('imdbLink:', imdbLink)
-    #         res = cur.execute('SELECT title FROM movie WHERE imdb_link=(?)', (newLink,))
-    #         # print(f'res:{res}')
-    #         # print(f'res.fetchone():{res.fetchone()}')
-    #         print(f'res.fetchall():{res.fetchall()}')
-    #         print(f'len(res.fetchall()):{len(res.fetchall())}')
-    #         if len(res.fetchall()) == 0:
-    #             mvTitle = imdb.movieTitle(page1, newLink)
-    #             page1.wait_for_timeout(2000)
-    #             #see if the movie can be found on rotten tomatoes
-    #             rLink = rotten.rottenLink(page3, mvTitle)
-    #             if rLink == '':
-    #                 continue
-    #             christmas = rotten.movieChris(page3, rLink, goto=False)
-    #             page3.wait_for_timeout(2000)
-    #             #search for the google trends data
-    #             gtrend.searchNewTrend(page2, mvTitle)
-    #             page2.wait_for_timeout(2000)
-    #             trend_path = gtrend.dlTrendCSV(page2, '/home/fiachra/atom_projects/IsDieHardAChristmasMovie/GoogleTrends/Data', mvTitle)
-    #             page2.wait_for_timeout(2000)
-    #
-    #             data = [cindex, mvTitle, newLink, christmas, rLink, trend_path]
-    #             cur.execute('INSERT INTO movie VALUES(?, ?, ?, ?, ?, ?)', data)
-    #             con.commit()
-    #             cindex += 1
-    #             print(f'cindex: {cindex}')
-    #     break
 
     #get even more movies based on the genre lists from imdb
     for genre in ['https://www.imdb.com/search/title/?genres=Action&explore=genres&title_type=feature',
@@ -142,14 +120,6 @@ with sync_playwright() as playwright:
         for index, imdbLink in enumerate(imdb_list):
             try:
                 res = cur.execute('SELECT title FROM movie WHERE imdb_link=(?)', (imdbLink,))
-                # print(f'res:{res}')
-                # print(f'res.fetchone():{res.fetchone()}')
-                # print(f'len(res.fetchall()):{len(res.fetchall())}')
-                # print(f'res.fetchall():{res.fetchall()}')
-                # test = res.fetchall()
-                # print(f'len(test): {len(test)}')
-                # print(f'test: {test}')
-                # print(f'type(res.fetchall()):{type(res.fetchall())}')
                 if len(res.fetchall()) == 0:
                     mvTitle = imdb.movieTitle(page1, imdbLink)
                     page1.wait_for_timeout(1500)
@@ -161,15 +131,19 @@ with sync_playwright() as playwright:
                     christmas = rotten.movieChris(page3, rLink, goto=False)
                     page3.wait_for_timeout(1500)
                     #search for the google trends data
-                    gtrend.searchNewTrend(page2, mvTitle)
-                    page2.wait_for_timeout(1500)
-                    trend_path = gtrend.dlTrendCSV(page2, '/home/fiachra/atom_projects/IsDieHardAChristmasMovie/GoogleTrends/Data', mvTitle)
-                    page2.wait_for_timeout(1500)
+                    # gtrend.searchNewTrend(page2, mvTitle)
+                    # page2.wait_for_timeout(1500)
+                    # trend_path = gtrend.dlTrendCSV(page2, '/home/fiachra/atom_projects/IsDieHardAChristmasMovie/GoogleTrends/Data', mvTitle)
+                    # page2.wait_for_timeout(1500)
 
-                    data = [cindex, mvTitle, imdbLink, christmas, rLink, trend_path]
-                    cur.execute('INSERT INTO movie VALUES(?, ?, ?, ?, ?, ?)', data)
+                    res = cur.execute('SELECT Mindex FROM movie ORDER BY Mindex DESC')
+                    lIndex = res.fetchone()
+
+                    # data = [lIndex + 1, mvTitle, imdbLink, christmas, rLink, trend_path]
+                    data = [lIndex + 1, mvTitle, imdbLink, christmas, rLink]
+                    # cur.execute('INSERT INTO movie VALUES(?, ?, ?, ?, ?, ?)', data)
+                    cur.execute('INSERT INTO movie (Mindex, title, imdb_link, bool_christmas, rotten_link) VALUES(?, ?, ?, ?, ?)', data)
                     con.commit()
-                    cindex += 1
                     # print(f'cindex: {cindex}')
                 # break for initial testing
                 # break
