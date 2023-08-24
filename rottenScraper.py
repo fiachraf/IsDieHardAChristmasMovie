@@ -15,18 +15,22 @@ def main() -> None:
         browser = playwright.firefox.launch(headless=False, slow_mo=50)
         page = browser.new_page()
 
-        chris = movieChris(page, 'https://www.rottentomatoes.com/m/sound_of_freedom')
+        # chris = movieChris(page, 'https://www.rottentomatoes.com/m/sound_of_freedom')
         # print(chris)
         # chris = movieChris(page, 'https://www.rottentomatoes.com/m/elf')
         # print(chris)
 
         # print(mvGenre)
-        page.goto('https://www.rottentomatoes.com/m/joy_ride_202')
-        test = rottenLink(page, 'joy ride 23')
-        print(test)
-        test = rottenSearch(page, 'Spider-Man: No Way Hom')
-        print(f'2 {test}')
+        page.goto('https://www.rottentomatoes.com/m/joy_ride_2023')
+        # test = rottenLink(page, 'joy ride 23')
+        # print(test)
+        # test = rottenSearch(page, 'Spider-Man: No Way Hom')
+        # print(f'2 {test}')
         # rottenSearch(page, 'elf')
+        # mDir = movieDir(page, 'https://www.rottentomatoes.com/m/schindlers_list')
+
+        print(rottenLink(page, 'The Godfather Part II'))
+        # print(mDir)
         browser.close()
 
 
@@ -36,19 +40,40 @@ def movieChris(mvPage, url, goto=True):
     if goto == True:
         mvPage.goto(url)
     #get the html from the imdb page and then use beautiful soup to parse it and find the desired info
+    # print('test5')
     html = mvPage.content()
+    # print('test6')
     soup = BeautifulSoup(html, 'html.parser')
+    # print('test7')
 
-    for k in soup.find_all(class_='info-item-value'):
-        if 'genre"' in k.attrs:
-            grape = k.get_text()
-            # print(f'grape: {grape}')
-            if grape.find('holiday') == -1 and grape.find('Holiday') == -1:
-                continue
-            else:
-                return True
+
+    for k in soup.find_all(class_='genre'):
+        # print(mvPage, 'chris3', k)
+        grape = k.get_text()
+        # print(f'grape: {grape}')
+        if grape.find('holiday') == -1 and grape.find('Holiday') == -1:
             continue
+        else:
+            return True
+        continue
     return False
+
+def movieDir(mvPage, url, goto=True):
+    #get the title of the movie from the webpage
+    if goto == True:
+        mvPage.goto(url)
+    #get the html from the imdb page and then use beautiful soup to parse it and find the desired info
+    # print('test5')
+    html = mvPage.content()
+    # print('test6')
+    soup = BeautifulSoup(html, 'html.parser')
+    # print('test7')
+
+    for l in soup.find_all("a", {"data-qa" : "movie-info-director"}):
+        # print('l',l)
+        # print('l.get_text()',l.get_text())
+        return l.get_text()
+
 
 def rottenLink(mvPage, mvName: str) -> str:
     mvName = mvName.lower()
@@ -62,9 +87,10 @@ def rottenLink(mvPage, mvName: str) -> str:
         # testLink.wait_for()
         if testLink.is_visible() == True:
             #if it gets a 404 then it will try search for the movie
-            link = rottenSearch(mvPage, mvName)
             #if the link returns a 404 then return an empty string
-            return ''
+            mvPage.goto('https://www.rottentomatoes.com/')
+            link = rottenSearch(mvPage, mvName)
+            return link
     except Exception as e:
         pass
 
@@ -87,13 +113,16 @@ def rottenSearch(mvPage, mvName):
     soup = BeautifulSoup(html, 'html.parser')
     #find the title as listed on the page
     grape = soup.find_all('h1', class_='title')
-    for k in grape:
-        ape = k.get_text()
-        #if the name supplied to search for matches exactly with the rotten tomatoes title
-        if mvName == ape:
-            return mvPage.url
-        else:
-            return ''
+    # for k in grape:
+    #     print('k', k)
+    #     ape = k.get_text()
+    #     #if the name supplied to search for matches exactly with the rotten tomatoes title
+    #     if mvName == ape:
+    #         return mvPage.url
+    #     else:
+    #         return ''
+    # doing check for same director in main script as if I need to search rotten Tomatoes then the name probably won't be an exact match
+    return mvPage.url
 
 if __name__ == '__main__':
     main()

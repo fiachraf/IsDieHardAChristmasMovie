@@ -55,27 +55,37 @@ with sync_playwright() as playwright:
 
     #create index for key column
     cindex = 0
+    with open("cookies.json", "w") as f:
+        f.write(json.dumps(context.cookies()))
     #for each link from the imdb top 250 page
     for index, imdbLink in enumerate(imdb_list):
         try:
+            data = []
             res = cur.execute('SELECT title FROM movie WHERE imdb_link=(?)', (imdbLink,))
+            # print(f'{}')
             # print(f'res:{res}')
             # print(f'res.fetchone():{res.fetchone()}')
             # print(f'len(res.fetchall()):{len(res.fetchall())}')
-            # print(f'res.fetchall():{res.fetchall()}')
+            print(f'res.fetchall():{res.fetchall()}')
             # test = res.fetchall()
             # print(f'len(test): {len(test)}')
             # print(f'test: {test}')
             # print(f'type(res.fetchall()):{type(res.fetchall())}')
+            res = cur.execute('SELECT title FROM movie WHERE imdb_link=(?)', (imdbLink,))
             if len(res.fetchall()) == 0:
+                print('no')
                 mvTitle = imdb.movieTitle(page1, imdbLink)
                 page1.wait_for_timeout(1500)
+                print(f'mvTitle: {mvTitle}')
                 #see if the movie can be found on rotten tomatoes
                 rLink = rotten.rottenLink(page3, mvTitle)
                 if rLink == '':
                     print('test')
                     continue
+                print('chris1')
+                page3.wait_for_timeout(1500)
                 christmas = rotten.movieChris(page3, rLink, goto=False)
+                print('chris2')
                 page3.wait_for_timeout(1500)
                 #search for the google trends data
                 # gtrend.searchNewTrend(page2, mvTitle)
@@ -119,6 +129,7 @@ with sync_playwright() as playwright:
         imdb_list = imdb.imdbGenre250(page1, genre)
         for index, imdbLink in enumerate(imdb_list):
             try:
+                data = []
                 res = cur.execute('SELECT title FROM movie WHERE imdb_link=(?)', (imdbLink,))
                 if len(res.fetchall()) == 0:
                     mvTitle = imdb.movieTitle(page1, imdbLink)
