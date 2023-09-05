@@ -40,12 +40,12 @@ def main() -> None:
         # print(imdbGenre250(page,'https://www.imdb.com/search/title/?title_type=feature&genres=animation&start=1&explore=genres&ref_=adv_nxt'))
         # print(imdbGenre250(page,'https://www.imdb.com/search/title/?title_type=feature&genres=animation&start=1&explore=genres&ref_=adv_nxt'))
         #get the title of the movie from the webpage
-        mvTitle = movieTitle(page, 'https://www.imdb.com/title/tt0111161/')
+        mvTitle = movieTitle(page, 'https://www.imdb.com/title/tt2293640/')
         mvDirector = movieDirector(page)
         print(mvDirector)
-        mvTitle = movieTitle(page, 'https://www.imdb.com/title/tt0319343/')
-        mvDirector = movieDirector(page)
-        print(mvDirector)
+        # mvTitle = movieTitle(page, 'https://www.imdb.com/title/tt0319343/')
+        # mvDirector = movieDirector(page)
+        # print(mvDirector)
         # print(mvTitle)
 
         browser.close()
@@ -147,7 +147,7 @@ def movieDirector(mvPage):
     soup = BeautifulSoup(html, 'html.parser')
     mvDir = soup.find_all(class_="ipc-metadata-list-item__label ipc-metadata-list-item__label--btn")
     for j in mvDir:
-        if j.get_text() == 'Director':
+        if j.get_text() == 'Director' or j.get_text() == 'Directors':
             # print('test', j)
             # print('test1', j.find_next_sibling())
             # print('test2', j.find_next_sibling().find_next_sibling())

@@ -29,7 +29,10 @@ def main() -> None:
         # rottenSearch(page, 'elf')
         # mDir = movieDir(page, 'https://www.rottentomatoes.com/m/schindlers_list')
 
-        print(rottenLink(page, 'The Godfather Part II'))
+        # print(rottenLink(page, 'The Godfather Part II'))
+        print(movieChris(page, 'https://www.rottentomatoes.com/m/elf'))
+        # print(movieChris(page, 'https://www.rottentomatoes.com/m/joy_ride_2023'))
+        print(movieChris(page, 'https://www.rottentomatoes.com/m/the_lord_of_the_rings_the_fellowship_of_the_ring'))
         # print(mDir)
         browser.close()
 
@@ -51,12 +54,11 @@ def movieChris(mvPage, url, goto=True):
         # print(mvPage, 'chris3', k)
         grape = k.get_text()
         # print(f'grape: {grape}')
-        if grape.find('holiday') == -1 and grape.find('Holiday') == -1:
-            continue
-        else:
+        if grape.find('holiday') != -1 or grape.find('Holiday') != -1:
             return True
-        continue
-    return False
+        else:
+            return False
+    # return False
 
 def movieDir(mvPage, url, goto=True):
     #get the title of the movie from the webpage
@@ -75,7 +77,7 @@ def movieDir(mvPage, url, goto=True):
         return l.get_text()
 
 
-def rottenLink(mvPage, mvName: str) -> str:
+def rottenLink(mvPage, mvName: str, listPlace=1) -> str:
     mvName = mvName.lower()
     mv_Name_1 = mvName.replace(' ', '_')
     mv_Name = mv_Name_1.replace('-', '_')
@@ -89,21 +91,26 @@ def rottenLink(mvPage, mvName: str) -> str:
             #if it gets a 404 then it will try search for the movie
             #if the link returns a 404 then return an empty string
             mvPage.goto('https://www.rottentomatoes.com/')
-            link = rottenSearch(mvPage, mvName)
+            link = rottenSearch(mvPage, mvName, listPlace)
             return link
     except Exception as e:
         pass
 
     return link
 
-def rottenSearch(mvPage, mvName):
+def rottenSearch(mvPage, mvName, listPlace=1):
     try:
         searchBox = mvPage.get_by_placeholder("Search movies, TV, actors, more...")
     except Exception as e:
         dummy = input('require use input, prob')
     searchBox.click()
     searchBox.fill(mvName)
-    riop = mvPage.locator('html body.body.no-touch.js-mptd-layout.roma div.container.roma-layout__body.layout-body rt-header#header-main.navbar search-algolia search-algolia-results search-algolia-results-category ul li a').first.click()
+    #clidk the nth item in list
+    if listPlace == 1:
+        riop = mvPage.locator('html body.body.no-touch.js-mptd-layout.roma div.container.roma-layout__body.layout-body rt-header#header-main.navbar search-algolia search-algolia-results search-algolia-results-category ul li a').first.click()
+    elif listPlace == 2:
+        riop = mvPage.locator('html body.body.no-touch.js-mptd-layout.roma div.container.roma-layout__body.layout-body rt-header#header-main.navbar search-algolia search-algolia-results search-algolia-results-category ul li a').second.click()
+
     #using the false can cause a cookie banner to appear and cause interference and it may give the weong result
     # print(movieChris(mvPage, mvPage.url, False))
     # print(movieChris(mvPage, mvPage.url))

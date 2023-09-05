@@ -109,6 +109,8 @@ def IMDBscraping():
     return
 
 def IMDB_DirFix(start_index=0):
+    #made a mistake with my initial code somewhere and it got the wrong director for a lot of movies
+    #my code doesn't work for any movie with > 1 director, it lists it as None directors. Might need to fix, depends on how many movies have > 1 director
     with sync_playwright() as playwright:
         # Load the cookies
         #create a headed browser so I can click refresh so it won't think I'm a bot
@@ -132,11 +134,7 @@ def IMDB_DirFix(start_index=0):
 
         # entry = cur.execute('SELECT title, rotten_link, director FROM movie WHERE Mindex=(?);', cindex).fetchone()
         entryList = cur.execute('SELECT title, imdb_link, director FROM movie').fetchall()
-        # entry = entryList[cindex[0]]
-        # # entry = res.fetchone()
-        # eTitle = entry[0]
-        # eRLink = entry[1]
-        # eDirector = entry[2]
+
 
         last_index = cur.execute('SELECT Mindex FROM movie ORDER BY Mindex DESC LIMIT 1;').fetchone()[0]
         while cindex[0] <= last_index:
@@ -161,44 +159,23 @@ def IMDB_DirFix(start_index=0):
             print(cindex[0])
             try:
 
-                # eTitle = entry[0]
+                eTitle = entry[0]
                 eILink = entry[1]
-                # eDirector = entry[2]
-                # if eRLink is None:
-                #     continue
-                # else:
+                eDirector = entry[2]
+
                 page3.goto(eILink)
-                # ILink = imdb.moviel.rottenLink(page3, eTitle)
-                # print('rLink: ', rLink)
-                # if rLink == '':
-                    # print('test')
-                    # cindex[0] += 1
-                    # entry = cur.execute('SELECT title, rotten_link, director FROM movie WHERE Mindex=(?);', cindex).fetchone()
-                    # entry = entryList[cindex[0]]
-                    # continue
                 page3.wait_for_timeout(1100)
                 fixDir = imdb.movieDirector(page3)
 
                 # page3.wait_for_timeout(1100)
                 data = [fixDir, cindex[0]]
-                cur.execute('UPDATE movie SET director = (?) WHERE Mindex=(?)', data)
-                con.commit()
-                # mDir = rotten.movieDir(page3, rLink, goto=False)
-                # page3.wait_for_timeout(1100)
-                # print(f'mDir:{mDir} eDirector:{eDirector}')
-                # if mDir == eDirector:
-                    # data = [rLink, cindex[0]]
-                    # cur.execute('UPDATE movie SET rotten_link = (?) WHERE Mindex=(?)', data)
-                    # con.commit()
-                # else:
-                    # data = [None, cindex[0]]
-                    # cur.execute('UPDATE movie SET rotten_link = (?) WHERE Mindex=(?)', data)
-                    # con.commit()
+                if fixDir != eDirector:
+                    cur.execute('UPDATE movie SET director = (?) WHERE Mindex=(?)', data)
+                    con.commit()
 
                 logging.info(cindex[0])
                 cindex[0] += 1
-                # entry = cur.execute('SELECT title, rotten_link, director FROM movie WHERE Mindex=(?);', cindex).fetchone()
-                # entry = entryList[cindex[0]]
+
                  # Save the cookies
                 with open("cookies.json", "w") as f:
                     f.write(json.dumps(context.cookies()))
@@ -244,11 +221,7 @@ def rottenScraping(start_index=0):
 
         # entry = cur.execute('SELECT title, rotten_link, director FROM movie WHERE Mindex=(?);', cindex).fetchone()
         entryList = cur.execute('SELECT title, rotten_link, director FROM movie').fetchall()
-        # entry = entryList[cindex[0]]
-        # # entry = res.fetchone()
-        # eTitle = entry[0]
-        # eRLink = entry[1]
-        # eDirector = entry[2]
+
 
         last_index = cur.execute('SELECT Mindex FROM movie ORDER BY Mindex DESC LIMIT 1;').fetchone()[0]
         while cindex[0] <= last_index:
@@ -284,8 +257,7 @@ def rottenScraping(start_index=0):
                 if rLink == '':
                     print('test')
                     cindex[0] += 1
-                    # entry = cur.execute('SELECT title, rotten_link, director FROM movie WHERE Mindex=(?);', cindex).fetchone()
-                    # entry = entryList[cindex[0]]
+
                     continue
                 page3.wait_for_timeout(1100)
                 christmas = rotten.movieChris(page3, rLink, goto=False)
@@ -305,8 +277,214 @@ def rottenScraping(start_index=0):
 
                 logging.info(cindex[0])
                 cindex[0] += 1
-                # entry = cur.execute('SELECT title, rotten_link, director FROM movie WHERE Mindex=(?);', cindex).fetchone()
-                # entry = entryList[cindex[0]]
+
+                 # Save the cookies
+                with open("cookies.json", "w") as f:
+                    f.write(json.dumps(context.cookies()))
+
+            except Exception as E:
+                logging.error(E, exc_info=True)
+                try:
+                    logging.error(data)
+                except Exception as E:
+                    pass
+
+         # Save the cookies
+        with open("cookies.json", "w") as f:
+            f.write(json.dumps(context.cookies()))
+
+        browser.close()
+    con.close()
+
+def rottenScraping2(start_index=0):
+    with sync_playwright() as playwright:
+        # Load the cookies
+        #create a headed browser so I can click refresh so it won't think I'm a bot
+        browser = playwright.firefox.launch(headless=False)
+        context = browser.new_context()
+
+        try:
+            #adding cookies
+            with open("cookies.json", "r") as f:
+                cookies = json.loads(f.read())
+                context.add_cookies(cookies)
+        except:
+            pass
+
+        page3 = context.new_page()
+
+        with open("cookies.json", "w") as f:
+            f.write(json.dumps(context.cookies()))
+        #create index for key column, makes it easier with sqlite if it's a list
+        # cindex = [start_index]
+
+        # entry = cur.execute('SELECT title, rotten_link, director FROM movie WHERE Mindex=(?);', cindex).fetchone()
+        entryList = cur.execute('SELECT title, rotten_link, director, Mindex FROM movie WHERE rotten_link IS NULL;').fetchall()
+
+
+        last_index = cur.execute('SELECT Mindex FROM movie ORDER BY Mindex DESC LIMIT 1;').fetchone()[0]
+        for index, entry in enumerate(entryList):
+            print('entry', entry, 'index', index)
+        # while cindex[0] <= last_index:
+            #close the browser context every once in a while to try avoid playwright memory leak
+            if index % 50 == 0:
+                context.close()
+                context = browser.new_context()
+                try:
+                    #adding cookies
+                    with open("cookies.json", "r") as f:
+                        cookies = json.loads(f.read())
+                        context.add_cookies(cookies)
+                except:
+                    pass
+
+                page3 = context.new_page()
+
+                with open("cookies.json", "w") as f:
+                    f.write(json.dumps(context.cookies()))
+            # entry = entryList[cindex[0]]
+            print(entry)
+            # print(cindex[0])
+            try:
+
+                eTitle = entry[0]
+                eRLink = entry[1]
+                eDirector = entry[2]
+                eMindex = entry[3]
+                if eMindex < start_index:
+                    continue
+                # if eRLink is None:
+                #     continue
+                # else:
+                rLink = rotten.rottenLink(page3, eTitle, listPlace=2)
+                print('rLink: ', rLink)
+                if rLink == '':
+                    print('test')
+                    # cindex[0] += 1
+
+                    continue
+
+                page3.wait_for_timeout(1100)
+                christmas = rotten.movieChris(page3, rLink, goto=False)
+
+                page3.wait_for_timeout(1100)
+                mDir = rotten.movieDir(page3, rLink, goto=False)
+                page3.wait_for_timeout(1100)
+                print(f'mDir:{mDir} eDirector:{eDirector}')
+                if mDir == eDirector:
+                    data = [rLink, eMindex]
+                    cur.execute('UPDATE movie SET rotten_link = (?) WHERE Mindex=(?)', data)
+                    con.commit()
+                else:
+                    data = [None, eMindex]
+                    cur.execute('UPDATE movie SET rotten_link = (?) WHERE Mindex=(?)', data)
+                    con.commit()
+
+                logging.info(eMindex)
+                # cindex[0] += 1
+
+                 # Save the cookies
+                with open("cookies.json", "w") as f:
+                    f.write(json.dumps(context.cookies()))
+
+            except Exception as E:
+                logging.error(E, exc_info=True)
+                try:
+                    logging.error(data)
+                except Exception as E:
+                    pass
+
+         # Save the cookies
+        with open("cookies.json", "w") as f:
+            f.write(json.dumps(context.cookies()))
+
+        browser.close()
+    con.close()
+
+def rottenScraping3(start_index=0):
+    #didn't get the christmas movie bool
+    with sync_playwright() as playwright:
+        # Load the cookies
+        #create a headed browser so I can click refresh so it won't think I'm a bot
+        browser = playwright.firefox.launch(headless=False)
+        context = browser.new_context()
+
+        try:
+            #adding cookies
+            with open("cookies.json", "r") as f:
+                cookies = json.loads(f.read())
+                context.add_cookies(cookies)
+        except:
+            pass
+
+        page3 = context.new_page()
+
+        with open("cookies.json", "w") as f:
+            f.write(json.dumps(context.cookies()))
+        #create index for key column, makes it easier with sqlite if it's a list
+        # cindex = [start_index]
+
+        # entry = cur.execute('SELECT title, rotten_link, director FROM movie WHERE Mindex=(?);', cindex).fetchone()
+        entryList = cur.execute('SELECT title, rotten_link, director, Mindex FROM movie WHERE bool_christmas IS NULL AND rotten_link IS NOT NULL;').fetchall()
+
+
+        last_index = cur.execute('SELECT Mindex FROM movie ORDER BY Mindex DESC LIMIT 1;').fetchone()[0]
+        for index, entry in enumerate(entryList):
+            print('entry', entry, 'index', index)
+        # while cindex[0] <= last_index:
+            #close the browser context every once in a while to try avoid playwright memory leak
+            if index % 50 == 0:
+                context.close()
+                context = browser.new_context()
+                try:
+                    #adding cookies
+                    with open("cookies.json", "r") as f:
+                        cookies = json.loads(f.read())
+                        context.add_cookies(cookies)
+                except:
+                    pass
+
+                page3 = context.new_page()
+
+                with open("cookies.json", "w") as f:
+                    f.write(json.dumps(context.cookies()))
+            # entry = entryList[cindex[0]]
+            print(entry)
+            # print(cindex[0])
+            try:
+
+                eTitle = entry[0]
+                eRLink = entry[1]
+                eDirector = entry[2]
+                eMindex = entry[3]
+                if eMindex < start_index:
+                    continue
+                # if eRLink is None:
+                #     continue
+                # else:
+                # rLink = rotten.rottenLink(page3, eTitle, listPlace=2)
+                # print('rLink: ', rLink)
+                # if rLink == '':
+                #     print('test')
+                #     # cindex[0] += 1
+                #
+                #     continue
+
+                # page3.wait_for_timeout(1100)
+                christmas = rotten.movieChris(page3, eRLink, goto=True)
+
+                page3.wait_for_timeout(1100)
+                # mDir = rotten.movieDir(page3, rLink, goto=False)
+                # page3.wait_for_timeout(1100)
+                # print(f'mDir:{mDir} eDirector:{eDirector}')
+
+                data = [christmas, eMindex]
+                cur.execute('UPDATE movie SET bool_christmas = (?) WHERE Mindex=(?)', data)
+                con.commit()
+
+                logging.info(eMindex)
+                # cindex[0] += 1
+
                  # Save the cookies
                 with open("cookies.json", "w") as f:
                     f.write(json.dumps(context.cookies()))
@@ -447,7 +625,7 @@ def gTrendScraping(start_index=0):
 if __name__ == '__main__':
     logging.basicConfig(filename='outlog.log', filemode='a', level=logging.NOTSET)
 
-    mode = input('IMDB, rotten or GTrend or IMDB fix dir: ')
+    mode = input('IMDB, rotten or GTrend or IMDB fix dir or rotten2 or rotten3: ')
 
     con = sql.connect('movie.db')
     cur = con.cursor()
@@ -470,6 +648,20 @@ if __name__ == '__main__':
         else:
             start_point = int(start_point)
         rottenScraping(start_point)
+    elif mode == 'rotten2':
+        start_point = input('choose starting index. Default 0: ')
+        if start_point == '':
+            start_point = 0
+        else:
+            start_point = int(start_point)
+        rottenScraping2(start_point)
+    elif mode == 'rotten3':
+        start_point = input('choose starting index. Default 0: ')
+        if start_point == '':
+            start_point = 0
+        else:
+            start_point = int(start_point)
+        rottenScraping3(start_point)
     elif mode == 'GTrend':
         start_point = input('choose starting index. Default 0: ')
         if start_point == '':
